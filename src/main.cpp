@@ -24,48 +24,37 @@ using namespace std;
 
 //------------Dataset Parameters-----------------------//!!!!!!!!!!!!!CHANGE!!!!!!!!!!!!!!!!!!!
 /*----------Kitti Sequence 00, 01, 02--------*/
-const float focal = 718.856;
-const Point2f pp = Point2f(607.1928, 185.2157);
+const float focal = 838.7974;
+const Point2f pp = Point2f(332.9649, 220.3799);
 
-/*----------Kitti Sequence 03--------*/
-//const float focal = 721.5377;
-//const Point2f pp = Point2f(609.5593, 172.854);
+const float baseline = 0.072;  //distance between two camera focal points (meter)
 
-/*----------Kitti Sequence 04, 05, 06--------*/
-//const float focal = 707.0912;
-//const Point2f pp = Point2f(601.8873, 183.1104);
-
-const float baseline = 0.53715;
-
-const int total_frames = 4541;    // 00
-//const int total_frames = 1101;      // 01
-//const int total_frames = 4661;      // 02
-//const int total_frames = 801;       // 03
-//const int total_frames = 271;      // 04
-//const int total_frames = 2761; // 05
-//const int total_frames = 1101;   // 06
+const int total_frames = 1000;    // 00
  
 const Mat cam_mat = (Mat_<float>(3,3)<<focal, 0.0f, pp.x, 0.0f, focal, pp.y, 0.0f, 0.0f, 1.0f);
 const float y_threshold = 1.0f;
 
-//------------------------------------------------------------//
-
-
 int main(int argc, const char * argv[]) {
     
     // The dataset file location
-    string head_name = "/Users/tanzhidan/Documents/data/kitti/sequences/00/"; //!!!!!!!CHANGE!!!!!!!!!!!!!!!!!!
+    string head_name = "d:/vision/dataset/images/3"; 
     
     // Char array used to store the image name
     char tail_name[20];
     
     // Read the first frame
-    Mat fisrt_frame = imread(head_name + "image_0/000000.png", 0);//!!!!!!!!!!MAY NEED CHANGE!!!!!!!!!!!!!!!!!
-    Frame frame(fisrt_frame, 30, pp, focal, baseline);
-    int start_frame = 0;
+	string imgName = head_name + "/img_left/1.png";
+    Mat first_frame = imread(imgName);
+	cvtColor(first_frame, first_frame, COLOR_BGR2GRAY);
+	if (!first_frame.data) {
+		std::cout << imgName << " --(!) couldnot be read " << std::endl;
+	}
+
+	Frame frame(first_frame, 30, pp, focal, baseline);
+    int start_frame = 1;
     
     // Open a txt file to store the results
-    ofstream fout("/Users/tanzhidan/Documents/kitti_0.txt"); // !!!!!!!!!!!CHANGE!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    ofstream fout(head_name + "q_fusioned.txt"); 
     if (!fout) {
         cout<<"File not opened!"<<endl;
         return 1;
@@ -75,10 +64,10 @@ int main(int argc, const char * argv[]) {
     namedWindow("window", 0);
     
     // Create a camera object
-    camera cam(fisrt_frame.cols, fisrt_frame.rows, focal, focal, pp.x, pp.y);
+    camera cam(first_frame.cols, first_frame.rows, focal, focal, pp.x, pp.y);
     
     // Containers for previous frame's information
-    Mat old_img_l;              // image
+    Mat old_img_l = first_frame;              // image
     vector<Point2f> old_pts;    // corners' locations
     vector<float> old_disp;     // disparities
     
@@ -96,17 +85,26 @@ int main(int argc, const char * argv[]) {
         clock_t ts = clock();
         
         // First of all, get the file name
-        sprintf(tail_name, "%06d.png", numFrame);
-        cout << endl;
         cout <<"# Frame:         \t"<<numFrame<<endl;
         
         // Load the stereo image pair
-        Mat img_l = imread(head_name+"image_0/"+tail_name, 0);
-        Mat img_r = imread(head_name+"image_1/"+tail_name, 0);
+		string leftImg = head_name + "/img_left/"   + int2String(numFrame) + ".png";
+		string rightImg = head_name + "/img_right/" + int2String(numFrame) + ".png";
+        Mat img_l = imread(leftImg);
+		cvtColor(img_l, img_l, COLOR_BGR2GRAY);
+    
+		Mat img_r = imread(rightImg);
+		cvtColor(img_r, img_r, COLOR_BGR2GRAY);
         if (img_l.empty()) {
-            cout<<"Error: can not load the images!"<<endl;
-            return -1;
+            cout<< leftImg <<"Error: can not load the images!"<<endl;
+			return -1;
         }
+		if (img_r.empty()) {
+			cout << rightImg << "Error: can not load the images!" << endl;
+			return -1;
+		}
+	//	imshow("left", img_l);
+	//	waitKey(0);
         
         // Detect fast corners
         vector<KeyPoint> keyPts;
@@ -131,6 +129,7 @@ int main(int argc, const char * argv[]) {
         // Pick up top points in each grid
         vector<Point2f> topPts;
         int want_in_each = MIN(1000 / occupied, 7);
+		//int want_in_each = MAX(1000 / occupied, 7);
         
         frame.SelectTopN(pts, topPts, subidx, want_in_each);
         cout << "Selected:\t" << topPts.size() << endl;
@@ -141,7 +140,6 @@ int main(int argc, const char * argv[]) {
         // Stereo matching
         vector<float> disp;
         frame.FindDisparity(topPts, disp, img_l, img_r, y_threshold);
-        
         
         ///////
         if (numFrame > start_frame) {
@@ -170,9 +168,6 @@ int main(int argc, const char * argv[]) {
             
             // Project these points to image plane.
             projectObj2img(prediPts3d, prediPts, cam, canBeSeen);
-            
-            
-            
             
             //-------------Tracker----------------------------------//
             Mat err;
@@ -213,8 +208,8 @@ int main(int argc, const char * argv[]) {
             }
             resize(img1_c, img1_c, Size(img1_c.cols/1.5, img1_c.rows));
             imshow("window", img1_c);
-            
-            
+			waitKey(2);
+
             
             //---------------Compute the relative camera pose--------------//
             // 1. Calculate the 3D points
@@ -244,9 +239,6 @@ int main(int argc, const char * argv[]) {
             new_pts.resize(k);
           
             solvePnP(pts3d, new_pts, cam_mat, Mat(), rvec, tvec);
-            
-            
-            
             
             //--------------------------------------------------------------//
             // Check the result, in case it's too bad.
@@ -284,7 +276,6 @@ int main(int argc, const char * argv[]) {
             oldRvec = rvec;
             oldTvec = tvec;
             
-
         }
         
         // Update

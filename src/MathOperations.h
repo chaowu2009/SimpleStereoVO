@@ -83,7 +83,7 @@ void Transform3D(vector<Point3f>& oldPts3d, vector<Point3f>& newPts3d, Mat& R, M
 }
 
 
-void projectObj2img(vector<Point3f>& pts3d, vector<Point2f>& pts2d, camera::camera cam, vector<bool>& isInImg)
+void projectObj2img(vector<Point3f>& pts3d, vector<Point2f>& pts2d, camera cam, vector<bool>& isInImg)
 {
     float fx = cam.fx, fy = cam.fy, cx = cam.cx, cy = cam.cy;
     float minu = 3, maxu = cam.imwidth -3;
@@ -110,4 +110,13 @@ void projectObj2img(vector<Point3f>& pts3d, vector<Point2f>& pts2d, camera::came
     
 }
 
+
+string int2String(int a)
+{
+	stringstream ss;
+	ss << a;
+	string str = ss.str();
+
+	return str;
+}
 #endif /* MathOperations_h */
