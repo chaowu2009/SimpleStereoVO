@@ -1,3 +1,0 @@
-/home/cwu/project/SimpleStereoVO/build/CMakeFiles/edit_cache.dir
-/home/cwu/project/SimpleStereoVO/build/CMakeFiles/rebuild_cache.dir
-/home/cwu/project/SimpleStereoVO/build/CMakeFiles/simple_vo.dir
