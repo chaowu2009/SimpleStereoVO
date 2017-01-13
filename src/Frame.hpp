@@ -28,7 +28,9 @@ public:
     void SortSubIdx(vector<KeyPoint>& vKeyPoints, vector<vector<int> >& subidx);
     
     // For each grid, only keep the N FAST corners with highest scores.
-    void SelectTopN(vector<Point2f>& iPoints, vector<Point2f>& oPoints, vector<vector<int>> & subidx, int N);
+    void SelectTopN(vector<Point2f>& iPoints, 
+                    vector<Point2f>& oPoints, 
+                    vector<vector<int> > & subidx, int N);
     
     // Calculate stereo disparities.
     void FindDisparity(vector<Point2f>& pts1, vector<float>& disp, Mat& img1, Mat& img2, float ythresh);

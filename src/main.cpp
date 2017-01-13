@@ -54,7 +54,8 @@ int main(int argc, const char * argv[]) {
     int start_frame = 1;
     
     // Open a txt file to store the results
-    ofstream fout(head_name + "q_fusioned.txt"); 
+    string outName = head_name + "q_fusioned.txt";
+    ofstream fout(outName.c_str()); 
     if (!fout) {
         cout<<"File not opened!"<<endl;
         return 1;
@@ -114,7 +115,7 @@ int main(int argc, const char * argv[]) {
         cout<<"# detected:      \t"<<pts.size()<<endl;
         
         // Assign features into grids
-        vector<vector<int>> subidx;
+        vector<vector<int> > subidx;
         frame.GetFeaturesIntoGrid(pts, subidx);
         
         // Sort the subidx
